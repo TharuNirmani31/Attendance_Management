@@ -1,0 +1,62 @@
+<div class="auth-container">
+    <div class="auth-card">
+      <img src="assets/logo.png" alt="Logo" class="logo" />
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
+        <h2>Welcome Back!</h2>
+        <p class="subtitle">Please login to your account</p>
+  
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <div class="input-container">
+            <i class="fas fa-envelope"></i>
+            <input 
+              id="loginEmail"
+              type="email"
+              formControlName="email"
+              placeholder="Enter your email"
+            >
+          </div>
+          <div class="error-message" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['required']">
+            Email is required
+          </div>
+          <div class="error-message" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['email']">
+            Please enter a valid email
+          </div>
+        </div>
+  
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-container">
+            <i class="fas fa-lock"></i>
+            <input 
+              id="loginPassword"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Enter your password"
+            >
+            <i class="fas"
+               [class.fa-eye]="!showPassword" 
+               [class.fa-eye-slash]="showPassword"
+               (click)="togglePasswordVisibility()"
+            ></i>
+          </div>
+          <div class="error-message" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['required']">
+            Password is required
+          </div>
+        </div>
+  
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" formControlName="rememberMe">
+            Remember me
+          </label>
+        </div>
+  
+        <button type="submit" [disabled]="loginForm.invalid || isLoading" class="submit-btn">
+          <span *ngIf="!isLoading">Login</span>
+          <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  

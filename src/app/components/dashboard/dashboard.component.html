@@ -1,0 +1,253 @@
+
+<div class="app-container" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <div class="sidebar" [@slideIn]>
+    <div class="sidebar-toggle" (click)="toggleSidebar()">
+      <i class="fas" [ngClass]="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+    </div>
+    <div class="sidebar-header">
+      <img src="assets/logo.png" alt="Company Logo" />
+      <h2 *ngIf="!sidebarCollapsed">Employee Attendance</h2>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-item active" (click)="navigateTo('/dashboard')">
+        <i class="fas fa-tachometer-alt"></i>
+        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+      </div>
+      <div class="menu-item" (click)="navigateTo('/attendance')">
+        <i class="fas fa-clipboard-check"></i>
+        <span *ngIf="!sidebarCollapsed">Attendance</span>
+      </div>
+      <div class="menu-item" (click)="navigateTo('/employee')">
+        <i class="fas fa-users"></i>
+        <span *ngIf="!sidebarCollapsed">Employees</span>
+      </div>
+      <div class="menu-item logout-btn" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!sidebarCollapsed">Logout</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area" style="background-color: rgb(236, 238, 241);">
+    <div class="header">
+      <div class="header-left">
+        <h1>Dashboard</h1>
+        <div class="breadcrumb">Home > Dashboard</div>
+      </div>
+      <div class="user-menu">
+        <div class="user-info" *ngIf="!sidebarCollapsed">
+          <div class="user-name">Admin User</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <div class="avatar">A</div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+
+    <!-- Face Recognition Banner -->
+    <div class="face-recognition-banner" *ngIf="!loading" [@fadeInOut]>
+      <div class="banner-content">
+        <div class="banner-icon">
+          <i class="fas fa-camera"></i>
+        </div>
+        <div class="banner-text">
+          <h2>Facial Recognition Attendance System</h2>
+          <p>Accurately track employee attendance using advanced AI-powered facial recognition technology</p>
+        </div>
+      </div>
+      <div class="banner-animation">
+        <div class="face-scan-animation">
+          <div class="face-outline">
+            <div class="scanning-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid" *ngIf="!loading" >
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Employees</h3>
+          <div class="stat-value">{{ totalEmployees }}</div>
+          <div class="stat-trend">
+            <i class="fas fa-arrow-up"></i> From last month
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Today's Attendance</h3>
+          <div class="stat-value">{{ todaysAttendance }}</div>
+          <div class="stat-trend negative">
+            <i class="fas fa-arrow-down"></i> From yesterday
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Attendance Rate</h3>
+          <div class="stat-value">{{ attendanceRate }}%</div>
+          <div class="stat-trend">
+            <i class="fas fa-arrow-up"></i> From last week
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts and Recent Activity -->
+    <div class="chart-row" *ngIf="!loading" [@fadeInOut]>
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Attendance Trends</h3>
+          <span class="chart-period">Last 30 days</span>
+        </div>
+        <div class="chart-area">
+          <!-- This would be where you'd put your actual chart -->
+          <div *ngIf="attendanceData.length > 0" class="chart-placeholder">
+            <div class="chart-bars">
+              <div class="bar" *ngFor="let item of attendanceData.slice(-7)" 
+                   [style.height.%]="(item.count / totalEmployees) * 100" 
+                   [title]="item.date + ': ' + item.count + ' employees'">
+                <span class="bar-value">{{item.count}}</span>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <div class="label" *ngFor="let item of attendanceData.slice(-7)">
+                {{item.date | date:'shortDate'}}
+              </div>
+            </div>
+          </div>
+          <div *ngIf="attendanceData.length === 0" class="no-data">
+            No attendance data available for the selected period
+          </div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Recent Activity</h3>
+          <span class="view-all">View all</span>
+        </div>
+        <div class="activity-container" *ngIf="recentActivities.length > 0">
+          <ul class="activity-list">
+            <li class="activity-item" *ngFor="let activity of recentActivities" [@fadeInOut]>
+              <div class="activity-icon">
+                <i class="fas fa-{{ activity.icon }}"></i>
+              </div>
+              <div class="activity-content">
+                <h4 class="activity-title">{{ activity.title }}</h4>
+                <div class="activity-time">{{ activity.time }}</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="no-data" *ngIf="recentActivities.length === 0">
+          No recent activities found
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="how-it-works-section" *ngIf="!loading" [@fadeInOut]>
+      <h3 class="section-title">How Facial Recognition Works</h3>
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon">
+            <i class="fas fa-camera"></i>
+          </div>
+          <h4>Face Detection</h4>
+          <p>System detects employee faces through the smart camera</p>
+        </div>
+        <div class="step-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon">
+            <i class="fas fa-fingerprint"></i>
+          </div>
+          <h4>Face Analysis</h4>
+          <p>Unique facial features are analyzed and mapped</p>
+        </div>
+        <div class="step-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <h4>Identity Matching</h4>
+          <p>System matches with database of enrolled employees</p>
+        </div>
+        <div class="step-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h4>Attendance Logged</h4>
+          <p>Time and attendance are automatically recorded</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Status and Performance -->
+    <div class="system-status-section" *ngIf="!loading" [@fadeInOut]>
+      <div class="status-card">
+        <div class="status-header">
+          <h3>System Status</h3>
+          <span class="status-badge online">Online</span>
+        </div>
+        <div class="status-metrics">
+          <div class="metric">
+            <div class="metric-icon">
+              <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Recognition Speed</span>
+              <span class="metric-value">0.8 seconds</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-icon">
+              <i class="fas fa-bullseye"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Accuracy Rate</span>
+              <span class="metric-value">99.7%</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-icon">
+              <i class="fas fa-camera"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Active Cameras</span>
+              <span class="metric-value">4/4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

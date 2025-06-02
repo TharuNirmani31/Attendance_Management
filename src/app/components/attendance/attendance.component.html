@@ -1,0 +1,207 @@
+
+<div class="app-container" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <div class="sidebar" [@slideIn]>
+    <div class="sidebar-toggle" (click)="toggleSidebar()">
+      <i class="fas" [ngClass]="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+    </div>
+    <div class="sidebar-header">
+      <img src="assets/logo.png" alt="Company Logo" />
+      <h2 *ngIf="!sidebarCollapsed">Employee Attendance</h2>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-item" (click)="navigateTo('/dashboard')">
+        <i class="fas fa-tachometer-alt"></i>
+        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+      </div>
+      <div class="menu-item active" (click)="navigateTo('/attendance')">
+        <i class="fas fa-clipboard-check"></i>
+        <span *ngIf="!sidebarCollapsed">Attendance</span>
+      </div>
+      <div class="menu-item" (click)="navigateTo('/employee')">
+        <i class="fas fa-users"></i>
+        <span *ngIf="!sidebarCollapsed">Employees</span>
+      </div>
+      <div class="menu-item logout-btn" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!sidebarCollapsed">Logout</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area" style="background-color: rgb(236, 238, 241);">
+    <div class="header">
+      <div class="header-left">
+        <h1>Attendance Log</h1>
+        <div class="breadcrumb">Home > Attendance</div>
+      </div>
+      <div class="user-menu">
+        <div class="user-info" *ngIf="!sidebarCollapsed">
+          <div class="user-name">Admin User</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <div class="avatar">A</div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading attendance data...</p>
+    </div>
+
+    <!-- Export Loading Overlay -->
+    <div *ngIf="exportLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Generating PDF report, please wait...</p>
+    </div>
+
+    <!-- Attendance Filter Controls -->
+    <div class="filter-controls" *ngIf="!loading">
+      <div class="date-range-picker">
+        <div class="date-field">
+          <label>From Date</label>
+          <div class="date-input">
+            <input type="date" [(ngModel)]="startDate" name="startDate">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+        </div>
+        <div class="date-field">
+          <label>To Date</label>
+          <div class="date-input">
+            <input type="date" [(ngModel)]="endDate" name="endDate">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+        </div>
+        <button class="filter-btn" (click)="filterAttendance()">
+          <i class="fas fa-filter"></i> Apply Filter
+        </button>
+        <button class="reset-btn" (click)="resetFilter()">
+          <i class="fas fa-redo"></i> Reset
+        </button>
+      </div>
+      <div class="search-box">
+        <input type="text" placeholder="Search by name or ID..." [(ngModel)]="searchQuery" (input)="sortRecords()">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+
+    <!-- Attendance Summary Card -->
+    <div class="attendance-summary" *ngIf="!loading">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Records</h3>
+          <div class="stat-value">{{ totalRecords }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Date Range</h3>
+          <div class="stat-value small-text">{{ formattedDateRange }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Match Threshold</h3>
+          <div class="stat-value">{{ matchThreshold }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Data Table -->
+    <div class="data-table-container" *ngIf="!loading">
+      <div class="table-header">
+        <h3>Attendance Records</h3>
+        <div class="table-actions">
+          <button class="export-btn" (click)="exportToPDF()" [disabled]="filteredRecords.length === 0 || exportLoading">
+            <i class="fas" [ngClass]="exportLoading ? 'fa-spinner fa-spin' : 'fa-download'"></i> Export PDF
+          </button>
+          <div class="page-size">
+            <label>Show:</label>
+            <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th (click)="sortBy('employeeId')">
+                Employee ID 
+                <i class="fas" [ngClass]="{'fa-sort': sortColumn !== 'employeeId', 'fa-sort-up': sortColumn === 'employeeId' && !sortAscending, 'fa-sort-down': sortColumn === 'employeeId' && sortAscending}"></i>
+              </th>
+              <th (click)="sortBy('employeeName')">
+                Employee Name
+                <i class="fas" [ngClass]="{'fa-sort': sortColumn !== 'employeeName', 'fa-sort-up': sortColumn === 'employeeName' && !sortAscending, 'fa-sort-down': sortColumn === 'employeeName' && sortAscending}"></i>
+              </th>
+              <th (click)="sortBy('timestamp')">
+                Date & Time
+                <i class="fas" [ngClass]="{'fa-sort': sortColumn !== 'timestamp', 'fa-sort-up': sortColumn === 'timestamp' && !sortAscending, 'fa-sort-down': sortColumn === 'timestamp' && sortAscending}"></i>
+              </th>
+              <th (click)="sortBy('matchDistance')">
+                Match Distance
+                <i class="fas" [ngClass]="{'fa-sort': sortColumn !== 'matchDistance', 'fa-sort-up': sortColumn === 'matchDistance' && !sortAscending, 'fa-sort-down': sortColumn === 'matchDistance' && sortAscending}"></i>
+              </th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of getPaginatedRecords()">
+              <td>{{ record.employeeId }}</td>
+              <td>{{ record.employeeName }}</td>
+              <td>{{ record.timestamp | date:'medium' }}</td>
+              <td>
+                <div class="match-score" [ngClass]="getMatchScoreClass(record.matchDistance)">
+                  {{ record.matchDistance | number:'1.2-2' }}
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="{'success': record.matchDistance <= 0.7, 'warning': record.matchDistance > 0.7 && record.matchDistance <= 0.85, 'danger': record.matchDistance > 0.85}">
+                  {{ getStatusLabel(record.matchDistance) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="no-data" *ngIf="filteredRecords.length === 0">
+        No attendance records found for the selected criteria
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="filteredRecords.length > 0">
+        <button [disabled]="currentPage === 1" (click)="goToPage(1)">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+        <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          <i class="fas fa-angle-left"></i>
+        </button>
+        <div class="page-info">
+          Page {{ currentPage }} of {{ totalPages }}
+        </div>
+        <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+          <i class="fas fa-angle-right"></i>
+        </button>
+        <button [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">
+          <i class="fas fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
